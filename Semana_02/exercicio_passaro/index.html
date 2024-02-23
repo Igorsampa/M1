@@ -4,12 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
-    <title>Exercício do Pássaro</title>
+    <title>Exercício do Pássaro Igor</title>
     <style>
         body {
             display: flex;
             justify-content: center;
-            align-items: center;
             height: 100vh;
             margin: 0;
         }
@@ -18,12 +17,84 @@
 <body>
 
 <script>
+//Fazemos isso para usar as configurações da phaser
+var config = {
+        type: Phaser.AUTO,
+        width: 800,
+        height: 600,
 
-    // vamos escrever o código (JS + Phaser) aqui dentro!
+        scene: {
+            preload: preload, //Funções para pré carregar, criar e atualializar o jogo
+            create: create,
+            update: update
+        }
+    };
+//inicialização do jogo com as configurações definidas
+    var game = new Phaser.Game(config);
+//Declaração de variáveis
+    var passarinho
+    var velocidade = 5
+    var contador = 0;
+    //As imagens serão carregadas aqui, na função de pré carregamento
+    function preload() {
+        //essas são as imagens que serão carregadas
+        this.load.image('bg', 'assets/bg_space.png');
+        this.load.spritesheet('bird', 'assets/bird-purple.png', { frameWidth: 75, frameWidth: 75});
+    
+    }
+//Essa função serve para criar os elementos
+    function create() {
+     //loop para imprimir a palavra oi  
+    while (contador < 10) {
+        console.log("oi");
+        contador++;
+        }
+       //Itens que serão criados e apresentados na tela do jogo, junto de suas configurações
+        this.add.image(400, 300, 'bg').setScale(1.2);
+        passarinho = this.add.sprite(100, 300, 'bird').setScale(1.3)
+        teste = passarinho
+        this.anims.create({
+            key: 'fly',
+            frames: this.anims.generateFrameNumbers('bird', {start: 0, end: 7}),
+            frameRate: 10,
+            repeat: -1
+        });
+        
+        passarinho.anims.play ('fly', true)
+    }
+//função para atualizar o jog
+    function update() { 
+       //Condições que manterão o pássaro voando para esquerda e direita o tempo todo
+       //passaringo.ida é criado como uma condição para que o pássado possa virar
+        if (passarinho.x === 100) {
+            passarinho.ida = true;
+        }
+        
+        if (passarinho.x < 700 && passarinho.ida === true) {
+            passarinho.x += 5
+            passarinho.setFlip(false, false)
+            
+        }
+        
+        if (passarinho.x === 700) {
+            passarinho.ida = false;
+        }
+        if (passarinho.x > 100 && passarinho.ida === false){
+            passarinho.x -= 5
+            passarinho.setFlip(true, false)
+
+        }
+       //Atribui a variável a passarinho
+        passarinho.y += velocidade;
+
+//Coloco as condições necessárias para que o passarinho possa se mover o tempo inteiro no eixo y
+if (passarinho.y >= 500 || passarinho.y <= 100) {
+ velocidade *= -1   
+  }
+    }
 
 </script>
 
-</body>
+</body
 </html>
-
-
+    
