@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exercício do Alien</title>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
+    <style> body { display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; } </style>
+</head>
+
+<body>
+    <script>
+        //Aqui a altura e a largura do jogo são definidas
+        const larguraJogo = 560;
+        const alturaJogo = 690;
+
+        // Aqui são as configurações da phaser
+        const config = {
+            type: Phaser.AUTO,
+            width: larguraJogo,
+            height: alturaJogo,
+
+
+            physics: {
+                default: 'arcade',
+                arcade: {
+                    gravity: {y: 300},// Aqui nós adicionamos um pouco de física
+debug: true //Vemos hitbox e os vetores dos objetos
+                }
+            },
+//Defino as "cenas" do jogo, como os arquivos e itens irão aparecer e serão executados
+            scene: {
+                preload: preload,
+                create: create,
+                update: update
+            }
+        };
+
+        // Definimos as configuraçõos da phaser na constante game
+        const game = new Phaser.Game(config);
+        //Defini as variáveis
+        var alien
+        var teclado
+        var fogo 
+        var plataforma   
+        var moeda
+        var pontuacao = -1
+        var placar
+        var meteoro
+        //Carrego as imagens/spritesheets que serão usadas, isso antes do jogo começar
+        function preload() {
+            this.load.image('background', 'assets/bg.png');
+            this.load.image('player', 'assets/alienigena.png')
+            this.load.image('turbo', 'assets/turbo.png')
+            this.load.image('tijolos', 'assets/tijolos.png')
+            this.load.image('moeda', 'assets/moeda.png')
+            this.load.spritesheet('meteoro', 'assets/meteoro.png', { frameWidth: 128, frameWidth: 128})
+        }
+//Adiciono os itens que foram carregados no jogo
+
+        function create() {
+           
+            this.add.image(larguraJogo/2, alturaJogo/2, 'background').setScale(0.8)
+            fogo = this.add.sprite(0, 0, 'turbo')
+            fogo.setVisible (false)   
+            //Usei o statisprite para que ela não fosse afetada pela gravidade, essa ideia foi retirada do Chatgpt
+           meteoro = this.physics.add.staticSprite (10, 10, 'meteoro')
+           //Animei normalmente a sprite
+           this.anims.create({
+            key: 'caindo',
+            frames: this.anims.generateFrameNumbers('meteoro', {start: 0, ent: 10}),
+            repeat: -1,
+
+           })
+           
+           meteoro.anims.play('caindo', true);
+            // Aqui cria o jogador alien, e umas configurações dele, como colisão com as bordas do mundo
+            alien = this.physics.add.sprite(larguraJogo / 2, 0, 'player');
+            alien.setCollideWorldBounds(true);
+            alien.body.setSize(100, 100, true);
+            teclado = this.input.keyboard.createCursorKeys();
+            // Aqui cria a plataforma, e adiciona colisão com o alien
+            plataforma = this.physics.add.staticImage(larguraJogo / 2, alturaJogo / 2, 'tijolos');
+            this.physics.add.collider(alien, plataforma);
+            // Aqui cria e configura a moeda, colisão com os bordas, ricochete, e colisão com a plataforma
+            moeda = this.physics.add.sprite(larguraJogo / 2, 0, 'moeda');
+            moeda.setCollideWorldBounds(true);
+            moeda.setBounce(0.7);
+            this.physics.add.collider(moeda, plataforma);
+           //Mexi na hitbox
+            meteoro.body.setSize(80, 80);
+            // Verifica colisões entre o jogador e a moeda, e faz com a moeda fique invisível enquanto ela não aparece em outro lugar da tela para ser coletada novamente
+            this.physics.add.overlap(alien, moeda, function() {
+                moeda.setVisible(false);
+                var posicaoMoeda_Y = Phaser.Math.RND.between(50, 650);
+                moeda.setPosition(posicaoMoeda_Y, 100);
+                pontuacao += 1;
+                placar.setText('moeda:' + pontuacao);
+                moeda.setVisible(true);
+            });
+            // Verifica colisões entre o jogador e o meteoro, fazendo com que o jogo "resete" quando a condição é satisfeita
+            this.physics.add.overlap(alien, meteoro, function() {
+                pontuacao = 0;
+                placar.setText('moeda:' + pontuacao);
+                alien.setX(alturaJogo / 2);
+                meteoro.setX(10);
+                meteoro.setY(10);
+            });
+
+            // Adicionei o placar na tela
+            placar = this.add.text(50, 50, 'Moedas:' + pontuacao, { fontSize: '45px', fill: '#495613' });
+        }
+
+        // Função para ir atualizando o jogo
+        function update() {
+            //Condições criadas para movimentação do alien
+            if (teclado.left.isDown) {
+                alien.setVelocityX(-150);
+            } else if (teclado.right.isDown) {
+                alien.setVelocityX(150);
+            } else {
+                alien.setVelocityX(0);
+            }
+
+            if (teclado.up.isDown) {
+                alien.setVelocityY(-150);
+                ativarTurbo();
+            } else {
+                semTurbo();
+            }
+            //Configuração do fogo do foguete
+            fogo.setPosition(alien.x, alien.y + alien.height / 2);
+            //Configuração da hitbox do meteoro
+            if (meteoro.x >= -100) {
+                meteoro.y += 1, meteoro.x += 2;
+                meteoro.body.x = meteoro.x - 45;
+                meteoro.body.y = meteoro.y - 45;
+            }
+            //Configuração para que o meteoro volte a cair de novo
+            if (meteoro.x > 770) {
+                meteoro.setPosition(-20, -20);
+            }
+        }
+
+        // Função para ativar o turbo
+        function ativarTurbo() {
+            fogo.setVisible(true);
+        }
+
+        // Função para desativar o turbo
+        function semTurbo() {
+            fogo.setVisible(false);
+        }
+        //Fim
+    </script>
+</body>
+</html>
+            
+       
+
+
+
+    </script>
+</body>
+</html>
